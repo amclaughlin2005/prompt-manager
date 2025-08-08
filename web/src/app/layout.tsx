@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +28,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <header className="sticky top-0 z-50 backdrop-blur bg-white/70 dark:bg-neutral-950/50 border-b border-neutral-200/80 dark:border-neutral-800/70">
+          <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+            <Link href="/" className="font-medium">Prompt Manager</Link>
+            <nav className="flex items-center gap-5 text-sm text-neutral-700 dark:text-neutral-300">
+              <Link href="/prompts" className="hover:underline">Prompts</Link>
+              <Link href="/bench" className="hover:underline">Bench</Link>
+              <a href="https://github.com/amclaughlin2005/prompt-manager" target="_blank" className="hover:underline">GitHub</a>
+            </nav>
+          </div>
+        </header>
+        <main>
+          {children}
+        </main>
       </body>
     </html>
   );
