@@ -26,6 +26,9 @@ export default async function Home() {
       <section className="space-y-2 mb-8">
         <h2 className="text-xl font-medium">Try it</h2>
         <Link href="/bench" className="text-blue-600 underline">Open Prompt Bench →</Link>
+        <div>
+          <Link href="/prompts" className="text-blue-600 underline">Open Prompt Manager →</Link>
+        </div>
       </section>
 
       <section className="space-y-2">
