@@ -7,7 +7,7 @@ import { ChatMessage, ChatRequest } from '@/lib/types/model';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { promptVersionId, modelKey, inputVars } = body || {};
+    const { promptVersionId, modelKey, inputVars, tools, autoExecuteTools } = body || {};
     if (!promptVersionId || !modelKey) return NextResponse.json({ error: 'promptVersionId and modelKey required' }, { status: 400 });
 
     const pv = await prisma.promptVersion.findUnique({ where: { id: promptVersionId }, include: { prompt: true } });
@@ -19,6 +19,8 @@ export async function POST(req: Request) {
       model: modelKey,
       messages: [{ role: 'user', content: userContent } as ChatMessage],
       maxTokens: 512,
+      tools,
+      autoExecuteTools,
     };
 
     const started = Date.now();

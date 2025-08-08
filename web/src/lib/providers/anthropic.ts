@@ -34,9 +34,12 @@ export async function chatAnthropic(req: ChatRequest): Promise<ChatResponse> {
   const toolCalls = result.content?.filter(p => p.type === 'tool_use').map((p: any) => ({ name: p.name, arguments: p.input })) || undefined;
 
   if (req.autoExecuteTools && toolCalls?.length) {
-    for (const call of toolCalls) {
+    const log: Array<{ name: string; args?: any; ok: boolean; durationMs: number; error?: string }> = [];
+    for (const call of toolCalls.slice(0, 3)) {
       try {
+        const started = Date.now();
         const toolResult = await runTool(call.name, call.arguments);
+        log.push({ name: call.name, args: call.arguments, ok: true, durationMs: Date.now() - started });
         const follow = await getClient().messages.create({
           model,
           system,
@@ -49,8 +52,10 @@ export async function chatAnthropic(req: ChatRequest): Promise<ChatResponse> {
         });
         const txt = follow.content?.map(p => (p.type === 'text' ? (p as any).text : '')).join('') || '';
         // overwrite content with the follow-up result
-        return { id: follow.id, model: modelKey, content: txt, usage: { inputTokens: undefined, outputTokens: undefined, costUsd: undefined } };
-      } catch {}
+        return { id: follow.id, model: modelKey, content: txt, usage: { inputTokens: undefined, outputTokens: undefined, costUsd: undefined }, toolRunLog: log };
+      } catch (e: any) {
+        log.push({ name: call.name, args: call.arguments, ok: false, durationMs: 0, error: e?.message });
+      }
     }
   }
   const usage: ChatUsage = {

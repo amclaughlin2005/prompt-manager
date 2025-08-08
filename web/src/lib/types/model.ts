@@ -34,4 +34,5 @@ export type ChatResponse = {
   content: string;
   toolCalls?: { name: string; arguments: any }[];
   usage?: ChatUsage;
+  toolRunLog?: Array<{ name: string; args?: any; ok: boolean; durationMs: number; error?: string }>;
 };

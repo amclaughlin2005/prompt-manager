@@ -27,6 +27,8 @@ export default function PromptDetailPage() {
   const [inputVars, setInputVars] = useState<string>('{}');
   const [runResult, setRunResult] = useState<any>(null);
   const [running, setRunning] = useState(false);
+  const [useTools, setUseTools] = useState(false);
+  const [autoExecute, setAutoExecute] = useState(true);
   const [recentRuns, setRecentRuns] = useState<any[]>([]);
   const [inputVarsError, setInputVarsError] = useState<string>('');
   const [varsObj, setVarsObj] = useState<Record<string, any>>({});
@@ -85,7 +87,8 @@ export default function PromptDetailPage() {
     try {
       let vars: any = {};
       try { vars = inputVars ? JSON.parse(inputVars) : {}; setInputVarsError(''); } catch (e) { setInputVarsError('Invalid JSON'); throw e; }
-      const r = await fetch('/api/v1/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptVersionId: selectedVersionId, modelKey, inputVars: vars }) });
+      const tools = useTools ? [{ name: 'calculator', description: 'Calc', parameters: { type: 'object', properties: { expression: { type: 'string' } }, required: ['expression'] } }] : undefined;
+      const r = await fetch('/api/v1/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptVersionId: selectedVersionId, modelKey, inputVars: vars, tools, autoExecuteTools: useTools ? autoExecute : undefined }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Run failed');
       setRunResult(j);
@@ -169,12 +172,21 @@ export default function PromptDetailPage() {
                 {inputVarsError && <div className="text-xs text-red-600">{inputVarsError}</div>}
               </div>
             </div>
+            <div className="flex items-center gap-4 text-sm">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={useTools} onChange={(e)=>setUseTools(e.target.checked)} /> Enable tools</label>
+              {useTools && (
+                <label className="flex items-center gap-2"><input type="checkbox" checked={autoExecute} onChange={(e)=>setAutoExecute(e.target.checked)} /> Auto execute tool calls</label>
+              )}
+            </div>
             <button className="btn-primary" disabled={running || !selectedVersionId || !!inputVarsError} onClick={onRun}>{running ? 'Running…' : 'Run'}</button>
             {error && <div className="text-red-600 text-sm">{error}</div>}
             {runResult && (
               <div className="card p-3 text-sm space-y-2">
                 <div className="font-medium">Output</div>
                 <pre className="whitespace-pre-wrap">{runResult.result?.content || ''}</pre>
+                {runResult.result?.toolRunLog?.length ? (
+                  <div className="text-xs text-neutral-600">Tools: {runResult.result.toolRunLog.map((t:any)=>`${t.name}(${t.ok?'ok':'err'})`).join(', ')}</div>
+                ) : null}
                 <div className="text-xs text-neutral-600">Latency: {runResult.result?.usage?.latencyMs ?? runResult?.latencyMs ?? '-'} ms • Cost: {runResult.result?.usage?.costUsd ?? runResult?.result?.usage?.costUsd ?? '-'} USD</div>
               </div>
             )}

@@ -34,6 +34,7 @@ export default function RootLayout({
             <nav className="flex items-center gap-5 text-sm text-neutral-700 dark:text-neutral-300">
               <Link href="/prompts" className="hover:underline">Prompts</Link>
               <Link href="/bench" className="hover:underline">Bench</Link>
+              <Link href="/evals" className="hover:underline">Evals</Link>
               <a href="https://github.com/amclaughlin2005/prompt-manager" target="_blank" className="hover:underline">GitHub</a>
             </nav>
           </div>

@@ -45,9 +45,12 @@ export async function chatOpenAI(req: ChatRequest): Promise<ChatResponse> {
   // Naive auto-execute single round
   if (req.autoExecuteTools && toolCalls?.length) {
     const toolResults: any[] = [];
-    for (const call of toolCalls) {
+    const log: Array<{ name: string; args?: any; ok: boolean; durationMs: number; error?: string }> = [];
+    for (const call of toolCalls.slice(0, 3)) {
       try {
+        const started = Date.now();
         const result = await runTool(call.name, call.arguments);
+        log.push({ name: call.name, args: call.arguments, ok: true, durationMs: Date.now() - started });
         toolResults.push({ name: call.name, result });
         // follow-up call with tool result to let model finalize
         const follow = await getClient().chat.completions.create({
@@ -63,13 +66,27 @@ export async function chatOpenAI(req: ChatRequest): Promise<ChatResponse> {
           max_tokens: req.maxTokens,
         });
         content = follow.choices[0].message.content ?? content;
-      } catch (e) {
+      } catch (e: any) {
+        log.push({ name: call.name, args: call.arguments, ok: false, durationMs: 0, error: e?.message });
         // ignore tool execution errors for now
       }
     }
     if ((!content || content.trim().length === 0) && toolResults.length > 0) {
       content = `Tool results: ${JSON.stringify(toolResults)}`;
     }
+    const usageAuto: ChatUsage = {
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
+    };
+    usageAuto.costUsd = estimateCostUsd(modelKey, usageAuto.inputTokens, usageAuto.outputTokens);
+    return {
+      id: completion.id,
+      model: modelKey,
+      content,
+      toolCalls,
+      usage: usageAuto,
+      toolRunLog: log,
+    };
   }
 
   const usage: ChatUsage = {
