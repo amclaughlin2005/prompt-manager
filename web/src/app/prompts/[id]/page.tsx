@@ -27,6 +27,9 @@ export default function PromptDetailPage() {
   const [inputVars, setInputVars] = useState<string>('{}');
   const [runResult, setRunResult] = useState<any>(null);
   const [running, setRunning] = useState(false);
+  const [recentRuns, setRecentRuns] = useState<any[]>([]);
+  const [inputVarsError, setInputVarsError] = useState<string>('');
+  const [varsObj, setVarsObj] = useState<Record<string, any>>({});
 
   const load = async () => {
     const r = await fetch(`/api/v1/prompts/${id}`);
@@ -37,13 +40,34 @@ export default function PromptDetailPage() {
     }
   };
 
+  const loadRuns = async (pvId: string) => {
+    if (!pvId) return;
+    try {
+      const r = await fetch(`/api/v1/runs?promptVersionId=${pvId}&limit=10`);
+      const j = await r.json();
+      if (r.ok) setRecentRuns(j.runs || []);
+    } catch {}
+  };
+
   useEffect(() => { if (id) { load(); fetch('/api/v1/models').then(r=>r.json()).then(j=> setModels(j.models||[])); } }, [id]);
+  useEffect(() => { if (selectedVersionId) loadRuns(selectedVersionId); }, [selectedVersionId]);
+
+  // Keep varsObj in sync with selected version variables
+  useEffect(() => {
+    const current = data?.versions?.find(v => v.id === selectedVersionId);
+    if (current) {
+      const base: Record<string, any> = { ...current.variables };
+      setVarsObj(base);
+      try { setInputVars(JSON.stringify(base, null, 2)); setInputVarsError(''); } catch {}
+    }
+  }, [selectedVersionId, data]);
 
   const onCreateVersion = async () => {
     setLoading(true);
     setError('');
     try {
-      const parsedVars = varsJson ? JSON.parse(varsJson) : {};
+      let parsedVars: any = {};
+      try { parsedVars = varsJson ? JSON.parse(varsJson) : {}; setInputVarsError(''); } catch (e) { setInputVarsError('Invalid JSON'); throw e; }
       const r = await fetch(`/api/v1/prompts/${id}/versions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template: tmpl, variables: parsedVars }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Failed to create version');
@@ -59,11 +83,13 @@ export default function PromptDetailPage() {
   const onRun = async () => {
     setRunning(true); setRunResult(null); setError('');
     try {
-      const vars = inputVars ? JSON.parse(inputVars) : {};
+      let vars: any = {};
+      try { vars = inputVars ? JSON.parse(inputVars) : {}; setInputVarsError(''); } catch (e) { setInputVarsError('Invalid JSON'); throw e; }
       const r = await fetch('/api/v1/runs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptVersionId: selectedVersionId, modelKey, inputVars: vars }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || 'Run failed');
       setRunResult(j);
+      loadRuns(selectedVersionId);
     } catch (e: any) {
       setError(e?.message || 'Error');
     } finally {
@@ -101,7 +127,26 @@ export default function PromptDetailPage() {
               ) : <div className="text-sm text-neutral-600">No versions yet.</div>}
 
               {currentVersion && (
-                <div className="text-xs text-neutral-600 whitespace-pre-wrap border rounded p-2">{currentVersion.template}</div>
+                <div className="space-y-2">
+                  <div className="text-xs text-neutral-600 whitespace-pre-wrap border rounded p-2">{currentVersion.template}</div>
+                  <div className="text-sm text-neutral-700">Variables</div>
+                  <div className="grid md:grid-cols-2 gap-2">
+                    {Object.keys(varsObj || {}).map((key) => (
+                      <div key={key} className="flex items-center gap-2">
+                        <label className="w-32 text-xs text-neutral-600">{key}</label>
+                        <input
+                          className="flex-1 border rounded px-2 py-1 text-sm"
+                          value={String(varsObj[key] ?? '')}
+                          onChange={(e)=>{
+                            const next = { ...varsObj, [key]: e.target.value };
+                            setVarsObj(next);
+                            try { setInputVars(JSON.stringify(next, null, 2)); setInputVarsError(''); } catch {}
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -117,10 +162,11 @@ export default function PromptDetailPage() {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Variables JSON</label>
-                <textarea className="w-full border rounded px-3 py-2 h-24" value={inputVars} onChange={(e)=>setInputVars(e.target.value)} />
+                <textarea className={`w-full border rounded px-3 py-2 h-24 ${inputVarsError ? 'border-red-500' : ''}`} value={inputVars} onChange={(e)=>{setInputVars(e.target.value); try { const v = JSON.parse(e.target.value); setVarsObj(v); setInputVarsError(''); } catch { setInputVarsError('Invalid JSON'); }}} />
+                {inputVarsError && <div className="text-xs text-red-600">{inputVarsError}</div>}
               </div>
             </div>
-            <button className="bg-black text-white rounded px-4 py-2" disabled={running || !selectedVersionId} onClick={onRun}>{running ? 'Running…' : 'Run'}</button>
+            <button className="bg-black text-white rounded px-4 py-2" disabled={running || !selectedVersionId || !!inputVarsError} onClick={onRun}>{running ? 'Running…' : 'Run'}</button>
             {error && <div className="text-red-600 text-sm">{error}</div>}
             {runResult && (
               <div className="border rounded p-3 text-sm space-y-2">
@@ -129,6 +175,22 @@ export default function PromptDetailPage() {
                 <div className="text-xs text-neutral-600">Latency: {runResult.result?.usage?.latencyMs ?? runResult?.latencyMs ?? '-'} ms • Cost: {runResult.result?.usage?.costUsd ?? runResult?.result?.usage?.costUsd ?? '-'} USD</div>
               </div>
             )}
+          </div>
+
+          <div className="border rounded p-4 mt-6 space-y-2">
+            <h2 className="text-lg font-medium">Recent Runs</h2>
+            {recentRuns.length === 0 && <div className="text-sm text-neutral-600">No runs yet.</div>}
+            <div className="space-y-2">
+              {recentRuns.map((r) => (
+                <div key={r.id} className="text-sm border rounded p-2 flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="font-mono text-xs text-neutral-600">{new Date(r.createdAt).toLocaleString()}</div>
+                    <div className="text-neutral-800">{r.output?.content?.slice(0, 160) || ''}{(r.output?.content?.length || 0) > 160 ? '…' : ''}</div>
+                  </div>
+                  <div className="text-xs text-neutral-600 ml-4 whitespace-nowrap">{r.modelKey} • {r.latencyMs ?? '-'} ms • ${r.costUsd ?? '-'}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       ) : (
