@@ -44,15 +44,19 @@ export async function chatOpenAI(req: ChatRequest): Promise<ChatResponse> {
 
   // Naive auto-execute single round
   if (req.autoExecuteTools && toolCalls?.length) {
+    const toolResults: any[] = [];
     for (const call of toolCalls) {
       try {
         const result = await runTool(call.name, call.arguments);
+        toolResults.push({ name: call.name, result });
         // follow-up call with tool result to let model finalize
         const follow = await getClient().chat.completions.create({
           model,
           messages: [
             ...(system ? [{ role: 'system' as const, content: system }] : []),
             ...(messages as any[]),
+            // Note: we cannot reference tool_call_id here with this simplified flow,
+            // so if the model does not use this context, we will fall back to showing tool results.
             { role: 'tool' as const, content: JSON.stringify(result), name: call.name },
           ],
           temperature: req.temperature,
@@ -62,6 +66,9 @@ export async function chatOpenAI(req: ChatRequest): Promise<ChatResponse> {
       } catch (e) {
         // ignore tool execution errors for now
       }
+    }
+    if ((!content || content.trim().length === 0) && toolResults.length > 0) {
+      content = `Tool results: ${JSON.stringify(toolResults)}`;
     }
   }
 
