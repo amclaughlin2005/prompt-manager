@@ -100,7 +100,7 @@ export default function PromptDetailPage() {
   const currentVersion = useMemo(() => data?.versions?.find(v => v.id === selectedVersionId), [data, selectedVersionId]);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="mb-4"><Link className="text-blue-600 underline" href="/prompts">← Back</Link></div>
       {data ? (
         <>
@@ -108,18 +108,18 @@ export default function PromptDetailPage() {
           {data.description && <div className="text-neutral-600 mb-6">{data.description}</div>}
 
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="border rounded p-4 space-y-3">
+            <div className="card p-5 space-y-3">
               <h2 className="text-lg font-medium">Create Version</h2>
-              <textarea className="w-full border rounded px-3 py-2 h-32" placeholder="Template with {{variables}}" value={tmpl} onChange={(e)=>setTmpl(e.target.value)} />
-              <textarea className="w-full border rounded px-3 py-2 h-24" placeholder="Variables JSON (optional)" value={varsJson} onChange={(e)=>setVarsJson(e.target.value)} />
-              <button className="bg-black text-white rounded px-4 py-2" disabled={loading || !tmpl} onClick={onCreateVersion}>{loading? 'Creating…':'Create Version'}</button>
+              <textarea className="textarea h-32" placeholder="Template with {{variables}}" value={tmpl} onChange={(e)=>setTmpl(e.target.value)} />
+              <textarea className="textarea h-24" placeholder="Variables JSON (optional)" value={varsJson} onChange={(e)=>setVarsJson(e.target.value)} />
+              <button className="btn-primary" disabled={loading || !tmpl} onClick={onCreateVersion}>{loading? 'Creating…':'Create Version'}</button>
               {error && <div className="text-red-600 text-sm">{error}</div>}
             </div>
 
-            <div className="border rounded p-4 space-y-3">
+            <div className="card p-5 space-y-3">
               <h2 className="text-lg font-medium">Versions</h2>
               {data.versions?.length ? (
-                <select className="w-full border rounded px-3 py-2" value={selectedVersionId} onChange={(e)=>setSelectedVersionId(e.target.value)}>
+                <select className="select" value={selectedVersionId} onChange={(e)=>setSelectedVersionId(e.target.value)}>
                   {data.versions.map(v => (
                     <option key={v.id} value={v.id}>v{v.version}</option>
                   ))}
@@ -135,7 +135,7 @@ export default function PromptDetailPage() {
                       <div key={key} className="flex items-center gap-2">
                         <label className="w-32 text-xs text-neutral-600">{key}</label>
                         <input
-                          className="flex-1 border rounded px-2 py-1 text-sm"
+                          className="input flex-1"
                           value={String(varsObj[key] ?? '')}
                           onChange={(e)=>{
                             const next = { ...varsObj, [key]: e.target.value };
@@ -151,25 +151,25 @@ export default function PromptDetailPage() {
             </div>
           </div>
 
-          <div className="border rounded p-4 mt-6 space-y-3">
+          <div className="card p-5 mt-6 space-y-3">
             <h2 className="text-lg font-medium">Run</h2>
             <div className="grid md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1">Model</label>
-                <select className="w-full border rounded px-3 py-2" value={modelKey} onChange={(e)=>setModelKey(e.target.value)}>
+                <label className="label">Model</label>
+                <select className="select" value={modelKey} onChange={(e)=>setModelKey(e.target.value)}>
                   {models.map(m => (<option key={m.key} value={m.key}>{m.key}</option>))}
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Variables JSON</label>
-                <textarea className={`w-full border rounded px-3 py-2 h-24 ${inputVarsError ? 'border-red-500' : ''}`} value={inputVars} onChange={(e)=>{setInputVars(e.target.value); try { const v = JSON.parse(e.target.value); setVarsObj(v); setInputVarsError(''); } catch { setInputVarsError('Invalid JSON'); }}} />
+                <label className="label">Variables JSON</label>
+                <textarea className={`textarea h-24 ${inputVarsError ? 'border-red-500' : ''}`} value={inputVars} onChange={(e)=>{setInputVars(e.target.value); try { const v = JSON.parse(e.target.value); setVarsObj(v); setInputVarsError(''); } catch { setInputVarsError('Invalid JSON'); }}} />
                 {inputVarsError && <div className="text-xs text-red-600">{inputVarsError}</div>}
               </div>
             </div>
-            <button className="bg-black text-white rounded px-4 py-2" disabled={running || !selectedVersionId || !!inputVarsError} onClick={onRun}>{running ? 'Running…' : 'Run'}</button>
+            <button className="btn-primary" disabled={running || !selectedVersionId || !!inputVarsError} onClick={onRun}>{running ? 'Running…' : 'Run'}</button>
             {error && <div className="text-red-600 text-sm">{error}</div>}
             {runResult && (
-              <div className="border rounded p-3 text-sm space-y-2">
+              <div className="card p-3 text-sm space-y-2">
                 <div className="font-medium">Output</div>
                 <pre className="whitespace-pre-wrap">{runResult.result?.content || ''}</pre>
                 <div className="text-xs text-neutral-600">Latency: {runResult.result?.usage?.latencyMs ?? runResult?.latencyMs ?? '-'} ms • Cost: {runResult.result?.usage?.costUsd ?? runResult?.result?.usage?.costUsd ?? '-'} USD</div>
@@ -177,12 +177,12 @@ export default function PromptDetailPage() {
             )}
           </div>
 
-          <div className="border rounded p-4 mt-6 space-y-2">
+          <div className="card p-5 mt-6 space-y-2">
             <h2 className="text-lg font-medium">Recent Runs</h2>
             {recentRuns.length === 0 && <div className="text-sm text-neutral-600">No runs yet.</div>}
             <div className="space-y-2">
               {recentRuns.map((r) => (
-                <div key={r.id} className="text-sm border rounded p-2 flex items-center justify-between">
+                <div key={r.id} className="text-sm border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 flex items-center justify-between">
                   <div className="flex-1">
                     <div className="font-mono text-xs text-neutral-600">{new Date(r.createdAt).toLocaleString()}</div>
                     <div className="text-neutral-800">{r.output?.content?.slice(0, 160) || ''}{(r.output?.content?.length || 0) > 160 ? '…' : ''}</div>

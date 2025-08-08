@@ -38,25 +38,36 @@ export default function PromptsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-semibold mb-6">Prompts</h1>
+    <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Prompts</h1>
+        <Link href="/bench" className="text-sm text-neutral-600 hover:underline">Open Bench →</Link>
+      </div>
 
-      <div className="border rounded p-4 mb-8 space-y-3">
+      <div className="card p-5 mb-8 space-y-4">
         <h2 className="text-lg font-medium">Create Prompt</h2>
-        <input className="w-full border rounded px-3 py-2" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-        <input className="w-full border rounded px-3 py-2" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
-        <button className="bg-black text-white rounded px-4 py-2" disabled={loading || !name} onClick={onCreate}>{loading ? 'Creating…' : 'Create'}</button>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <label className="label">Name</label>
+            <input className="input" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Description</label>
+            <input className="input" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+        </div>
+        <button className="btn-primary" disabled={loading || !name} onClick={onCreate}>{loading ? 'Creating…' : 'Create'}</button>
         {error && <div className="text-red-600 text-sm">{error}</div>}
       </div>
 
-      <div className="space-y-2">
+      <div className="grid md:grid-cols-2 gap-4">
         {prompts.map((p) => (
-          <div key={p.id} className="border rounded p-3 flex items-center justify-between">
+          <div key={p.id} className="card p-4 flex items-center justify-between">
             <div>
               <div className="font-medium">{p.name}</div>
               {p.description && <div className="text-sm text-neutral-600">{p.description}</div>}
             </div>
-            <Link className="text-blue-600 underline" href={`/prompts/${p.id}`}>Open →</Link>
+            <Link className="text-blue-600 hover:underline" href={`/prompts/${p.id}`}>Open →</Link>
           </div>
         ))}
         {prompts.length === 0 && <div className="text-neutral-500 text-sm">No prompts yet.</div>}

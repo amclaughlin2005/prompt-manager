@@ -22,5 +22,21 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+}
+
+.card {
+  @apply border rounded-xl bg-white/90 dark:bg-neutral-900/60 shadow-sm border-neutral-200 dark:border-neutral-800 backdrop-blur;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm font-medium hover:bg-neutral-800 disabled:opacity-50;
+}
+
+.input, .textarea, .select {
+  @apply w-full border border-neutral-200 dark:border-neutral-800 rounded-md bg-white/80 dark:bg-neutral-900/50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-500/20;
+}
+
+.label {
+  @apply block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1;
 }
