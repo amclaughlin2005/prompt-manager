@@ -23,6 +23,11 @@ export default async function Home() {
         </div>
       </section>
 
+      <section className="space-y-2 mb-8">
+        <h2 className="text-xl font-medium">Try it</h2>
+        <Link href="/bench" className="text-blue-600 underline">Open Prompt Bench →</Link>
+      </section>
+
       <section className="space-y-2">
         <h2 className="text-xl font-medium">API</h2>
         <ul className="list-disc pl-6 text-sm">
