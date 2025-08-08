@@ -35,9 +35,11 @@ If Neon role cannot run migrations:
 - Pre-run migrations locally or via CI/CD job, then adjust `npm run build` to only run `prisma generate` before `next build`.
 
 ### Build & Deploy
-- Default Vercel Framework: Next.js
-- Build Command (from `package.json`): `npm run build`
-- Output: Next.js default
+- Root Directory: set to `web/` (monorepo layout)
+- Framework: Next.js
+- Build Command (from `web/package.json`): `npm run build`
+- Install Command: `npm install`
+- Output Directory: Next.js default (`.next`)
 
 ### Post-Deploy Checks
 - `GET /api/health` returns `{ ok: true }`
