@@ -1,0 +1,97 @@
+// Prisma schema for Postgres (Neon) deployments
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Prompt {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  versions    PromptVersion[]
+}
+
+model PromptVersion {
+  id          String   @id @default(cuid())
+  prompt      Prompt   @relation(fields: [promptId], references: [id])
+  promptId    String
+  version     Int
+  template    String
+  variables   Json
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  runs        Run[]
+  evalResults EvalResult[]
+
+  @@unique([promptId, version])
+}
+
+model Run {
+  id               String        @id @default(cuid())
+  promptVersion    PromptVersion @relation(fields: [promptVersionId], references: [id])
+  promptVersionId  String
+  modelKey         String
+  inputVars        Json
+  output           Json?
+  toolCalls        Json?
+  usage            Json?
+  costUsd          Float?
+  latencyMs        Int?
+  createdAt        DateTime      @default(now())
+}
+
+model EvalDataset {
+  id          String       @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime     @default(now())
+  examples    EvalExample[]
+  runs        EvalRun[]
+}
+
+model EvalExample {
+  id         String      @id @default(cuid())
+  dataset    EvalDataset @relation(fields: [datasetId], references: [id])
+  datasetId  String
+  inputs     Json
+  expected   Json?
+  metadata   Json?
+  results    EvalResult[]
+}
+
+model EvalRun {
+  id           String       @id @default(cuid())
+  dataset      EvalDataset  @relation(fields: [datasetId], references: [id])
+  datasetId    String
+  matrixConfig Json
+  judgeConfig  Json
+  startedAt    DateTime     @default(now())
+  finishedAt   DateTime?
+  summary      Json?
+  results      EvalResult[]
+}
+
+model EvalResult {
+  id               String        @id @default(cuid())
+  evalRun          EvalRun       @relation(fields: [evalRunId], references: [id])
+  evalRunId        String
+  example          EvalExample   @relation(fields: [exampleId], references: [id])
+  exampleId        String
+  promptVersion    PromptVersion @relation(fields: [promptVersionId], references: [id])
+  promptVersionId  String
+  modelKey         String
+  output           Json?
+  scores           Json?
+  costUsd          Float?
+  latencyMs        Int?
+}
+
+
