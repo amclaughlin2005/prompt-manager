@@ -12,6 +12,8 @@ type ChatRequest = {
   messages: ChatMessage[];
   temperature?: number;
   maxTokens?: number;
+  tools?: any[];
+  autoExecuteTools?: boolean;
 };
 
 export default function BenchPage() {
@@ -23,6 +25,8 @@ export default function BenchPage() {
   const [response, setResponse] = useState<string>('');
   const [usage, setUsage] = useState<{ inputTokens?: number; outputTokens?: number; costUsd?: number }>();
   const [error, setError] = useState<string>('');
+  const [useTools, setUseTools] = useState(false);
+  const [autoExecute, setAutoExecute] = useState(true);
 
   useEffect(() => {
     fetch('/api/v1/models')
@@ -49,6 +53,8 @@ export default function BenchPage() {
           { role: 'user', content: prompt },
         ],
         maxTokens: 256,
+        tools: useTools ? [{ name: 'calculator', description: 'Calc', parameters: { type: 'object', properties: { expression: { type: 'string' } }, required: ['expression'] } }] : undefined,
+        autoExecuteTools: useTools ? autoExecute : undefined,
       };
       const r = await fetch('/api/v1/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();
@@ -93,6 +99,13 @@ export default function BenchPage() {
         <div>
           <label className="label">User Prompt</label>
           <textarea className="textarea h-28" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+        </div>
+
+        <div className="flex items-center gap-4 text-sm">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={useTools} onChange={(e)=>setUseTools(e.target.checked)} /> Enable tools</label>
+          {useTools && (
+            <label className="flex items-center gap-2"><input type="checkbox" checked={autoExecute} onChange={(e)=>setAutoExecute(e.target.checked)} /> Auto execute tool calls</label>
+          )}
         </div>
 
         <button

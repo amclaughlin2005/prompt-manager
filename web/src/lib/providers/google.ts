@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ChatRequest, ChatResponse, ChatUsage } from '@/lib/types/model';
+// Google tool integration is not enabled yet
 import { estimateCostUsd } from '@/lib/costs/pricing';
 
 function getClient(): GoogleGenerativeAI {

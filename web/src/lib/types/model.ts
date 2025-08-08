@@ -19,6 +19,7 @@ export type ChatRequest = {
   temperature?: number;
   maxTokens?: number;
   stream?: boolean;
+  autoExecuteTools?: boolean;
 };
 
 export type ChatUsage = {

@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ChatRequest, ChatResponse, ChatUsage } from '@/lib/types/model';
+import { runTool } from '@/lib/tools/registry';
 import { estimateCostUsd } from '@/lib/costs/pricing';
 
 function getClient(): Anthropic {
@@ -32,6 +33,26 @@ export async function chatAnthropic(req: ChatRequest): Promise<ChatResponse> {
   const contentText = result.content?.map(p => (p.type === 'text' ? (p as any).text : '')).join('') || '';
   const toolCalls = result.content?.filter(p => p.type === 'tool_use').map((p: any) => ({ name: p.name, arguments: p.input })) || undefined;
 
+  if (req.autoExecuteTools && toolCalls?.length) {
+    for (const call of toolCalls) {
+      try {
+        const toolResult = await runTool(call.name, call.arguments);
+        const follow = await getClient().messages.create({
+          model,
+          system,
+          messages: [
+            ...(messages.map(m => ({ role: m.role as any, content: m.content }))),
+            { role: 'tool', content: JSON.stringify(toolResult) } as any,
+          ],
+          temperature: req.temperature,
+          max_tokens: req.maxTokens || 1024,
+        });
+        const txt = follow.content?.map(p => (p.type === 'text' ? (p as any).text : '')).join('') || '';
+        // overwrite content with the follow-up result
+        return { id: follow.id, model: modelKey, content: txt, usage: { inputTokens: undefined, outputTokens: undefined, costUsd: undefined } };
+      } catch {}
+    }
+  }
   const usage: ChatUsage = {
     inputTokens: result.usage?.input_tokens,
     outputTokens: result.usage?.output_tokens,

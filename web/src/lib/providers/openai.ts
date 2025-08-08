@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { ChatRequest, ChatResponse, ChatUsage } from '@/lib/types/model';
+import { runTool } from '@/lib/tools/registry';
 import { estimateCostUsd } from '@/lib/costs/pricing';
 
 function getClient(): OpenAI {
@@ -39,7 +40,30 @@ export async function chatOpenAI(req: ChatRequest): Promise<ChatResponse> {
 
   const choice = completion.choices[0];
   const toolCalls = choice.message.tool_calls?.map((tc: any) => ({ name: tc.function?.name, arguments: safeJson(tc.function?.arguments) })) || undefined;
-  const content = choice.message.content ?? '';
+  let content = choice.message.content ?? '';
+
+  // Naive auto-execute single round
+  if (req.autoExecuteTools && toolCalls?.length) {
+    for (const call of toolCalls) {
+      try {
+        const result = await runTool(call.name, call.arguments);
+        // follow-up call with tool result to let model finalize
+        const follow = await getClient().chat.completions.create({
+          model,
+          messages: [
+            ...(system ? [{ role: 'system' as const, content: system }] : []),
+            ...(messages as any[]),
+            { role: 'tool' as const, content: JSON.stringify(result), name: call.name },
+          ],
+          temperature: req.temperature,
+          max_tokens: req.maxTokens,
+        });
+        content = follow.choices[0].message.content ?? content;
+      } catch (e) {
+        // ignore tool execution errors for now
+      }
+    }
+  }
 
   const usage: ChatUsage = {
     inputTokens: completion.usage?.prompt_tokens,
