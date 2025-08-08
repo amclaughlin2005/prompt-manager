@@ -101,7 +101,10 @@ export default function PromptDetailPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10">
-      <div className="mb-4"><Link className="text-blue-600 underline" href="/prompts">← Back</Link></div>
+      <div className="mb-4 flex items-center justify-between">
+        <Link className="text-blue-600 hover:underline" href="/prompts">← Back</Link>
+        <Link className="text-sm text-neutral-600 hover:underline" href="/">Home</Link>
+      </div>
       {data ? (
         <>
           <h1 className="text-2xl font-semibold mb-1">{data.name}</h1>

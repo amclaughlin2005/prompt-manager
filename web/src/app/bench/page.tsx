@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 type ModelItem = { key: string; provider: string; tools: boolean };
@@ -64,14 +65,17 @@ export default function BenchPage() {
   const modelOptions = useMemo(() => models.map((m) => ({ value: m.key, label: `${m.key}` })), [models]);
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-semibold mb-6">Prompt Bench</h1>
+    <div className="max-w-3xl mx-auto px-6 py-10">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Prompt Bench</h1>
+        <Link href="/" className="text-sm text-neutral-600 hover:underline">Home</Link>
+      </div>
 
-      <div className="space-y-6">
+      <div className="card p-5 space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-1">Model</label>
+          <label className="label">Model</label>
           <select
-            className="w-full border rounded px-3 py-2"
+            className="select"
             value={model}
             onChange={(e) => setModel(e.target.value)}
           >
@@ -82,19 +86,19 @@ export default function BenchPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">System</label>
-          <textarea className="w-full border rounded px-3 py-2 h-20" value={system} onChange={(e) => setSystem(e.target.value)} />
+          <label className="label">System</label>
+          <textarea className="textarea h-20" value={system} onChange={(e) => setSystem(e.target.value)} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">User Prompt</label>
-          <textarea className="w-full border rounded px-3 py-2 h-28" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+          <label className="label">User Prompt</label>
+          <textarea className="textarea h-28" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
         </div>
 
         <button
           onClick={onRun}
           disabled={loading}
-          className="bg-black text-white rounded px-4 py-2 disabled:opacity-50"
+          className="btn-primary"
         >
           {loading ? 'Running…' : 'Run'}
         </button>
@@ -102,7 +106,7 @@ export default function BenchPage() {
         {error && <div className="text-red-600 text-sm">{error}</div>}
 
         {(response || usage) && (
-          <div className="border rounded p-4 space-y-3">
+          <div className="card p-4 space-y-3">
             {response && (
               <div>
                 <div className="text-sm font-medium mb-1">Response</div>

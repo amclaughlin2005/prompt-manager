@@ -41,7 +41,10 @@ export default function PromptsPage() {
     <div className="max-w-5xl mx-auto px-6 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Prompts</h1>
-        <Link href="/bench" className="text-sm text-neutral-600 hover:underline">Open Bench →</Link>
+        <div className="flex items-center gap-4 text-sm text-neutral-600">
+          <Link href="/" className="hover:underline">Home</Link>
+          <Link href="/bench" className="hover:underline">Bench →</Link>
+        </div>
       </div>
 
       <div className="card p-5 mb-8 space-y-4">
