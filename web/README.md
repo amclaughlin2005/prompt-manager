@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Prompt Manager — Web (Next.js)
 
-## Getting Started
+### Getting Started (Local)
 
-First, run the development server:
+- Install deps: `npm install`
+- Create `.env` from `.env.example` and set:
+  - `DATABASE_URL="file:./dev.db"`
+  - Optional: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`
+- Run Prisma (SQLite):
+  - `npx prisma migrate dev`
+  - `npm run prisma:generate`
+- Start dev server:
+  - `npm run dev`
+- Health checks:
+  - `GET /api/health`
+  - `GET /api/db` (returns `promptCount`)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Production Deploy (Vercel + Neon Postgres)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- In Vercel Project Settings → Environment Variables (Preview & Production):
+  - `DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DB?sslmode=require`
+  - `OPENAI_API_KEY` (optional)
+  - `ANTHROPIC_API_KEY` (optional)
+  - `GOOGLE_API_KEY` (optional)
+- Build Command (default `npm run build`) will:
+  - Generate Prisma client and run `prisma migrate deploy` against Postgres (`schema.postgres.prisma`)
+  - Build Next.js
+- Branching:
+  - PRs → Preview deployments
+  - `main` → Production
+- Notes:
+  - Prefer Neon’s pooled connection string if using many concurrent requests
+  - Ensure Neon role has permission to run migrations; otherwise run migrations manually and use `prisma generate` only
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Schemas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Local dev: `prisma/schema.prisma` (SQLite)
+- Production: `prisma/schema.postgres.prisma` (Postgres/Neon)
 
-## Learn More
+### Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev`: Next dev server (Turbopack)
+- `npm run build`: Prisma generate + migrate deploy (Postgres) + Next build
+- `npm run start`: Next start
+- `npm run prisma:generate`: Generate Prisma client (uses default schema paths)
+- `npm run prisma:migrate:deploy`: Deploy migrations to Postgres schema
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Troubleshooting
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- ESLint warnings from `src/generated/prisma/*` are ignored via `eslint.config.mjs`
+- If build fails on Vercel due to DB perms, pre-run migrations and remove migrate step from `build` script

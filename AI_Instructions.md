@@ -36,6 +36,7 @@ This is the authoritative, living documentation for the repository. Update this 
 Deployment/Hosting
 - GitHub repository as source of truth
 - Vercel for deployments: Preview on PRs, Production on `main`
+- Database: Neon Postgres in Production; SQLite locally. Production builds run `prisma migrate deploy` using `prisma/schema.postgres.prisma`.
 
 ---
 
@@ -159,7 +160,7 @@ Adapters
 - `OPENAI_API_KEY`
 - `ANTHROPIC_API_KEY`
 - `GOOGLE_API_KEY`
-- `DATABASE_URL` (SQLite for dev; Postgres in prod)
+- `DATABASE_URL` (SQLite for dev; Postgres in prod via Neon, with `sslmode=require`)
 - Optional: `LANGFUSE_*`
 
 ---
@@ -194,5 +195,6 @@ On any change:
 - v0.0.1: Initial instruction system and project plan created; structure defined and ready for iteration.
 - v0.0.2: Clarified React via Next.js frontend and GitHub→Vercel deployment; added environment variables section.
 - v0.0.3: Scaffolded Next.js app under `web/` with Prisma (SQLite), initial schema/models, and basic API routes (`/api/health`, `/api/db`). Updated folder and service maps.
+- v0.0.4: Added Neon Postgres production schema, updated build process to run migrate deploy on Vercel, documented deployment and env variables.
 
 
